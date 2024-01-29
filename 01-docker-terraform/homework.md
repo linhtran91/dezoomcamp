@@ -25,6 +25,7 @@ Which tag has the following text? - *Automatically remove the container when it 
 - `--rmc`
 - `--rm`
 
+Ans: `--rm`
 
 ## Question 2. Understanding docker first run 
 
@@ -38,6 +39,7 @@ What is version of the package *wheel* ?
 - 23.0.1
 - 58.1.0
 
+Ans: 0.42.0
 
 # Prepare Postgres
 
@@ -66,6 +68,17 @@ Remember that `lpep_pickup_datetime` and `lpep_dropoff_datetime` columns are in 
 - 15859
 - 89009
 
+```sql
+SELECT
+  COUNT(1)
+FROM
+  green_taxi_data
+WHERE
+  (lpep_pickup_datetime>='2019-09-18 00:00:00' AND
+  lpep_dropoff_datetime<'2019-09-19 00:00:00');
+```
+Ans: 15612
+
 ## Question 4. Largest trip for each day
 
 Which was the pick up day with the largest trip distance
@@ -76,6 +89,15 @@ Use the pick up time for your calculations.
 - 2019-09-26
 - 2019-09-21
 
+```sql
+SELECT
+  CAST(lpep_pickup_datetime AS DATE) as "day",
+  MAX(trip_distance) as "largest_distance"
+FROM green_taxi_data
+GROUP BY "day"
+ORDER BY "largest_distance" DESC;
+```
+Ans: 2019-09-26
 
 ## Question 5. The number of passengers
 
@@ -88,6 +110,15 @@ Which were the 3 pick up Boroughs that had a sum of total_amount superior to 500
 - "Bronx" "Manhattan" "Queens" 
 - "Brooklyn" "Queens" "Staten Island"
 
+```sql
+select coalesce(puzones."Borough",'Unknown') as zone_name, sum(taxi.total_amount) as total
+from green_taxi_data as taxi
+inner join zone as puzones on taxi."PULocationID" = puzones."LocationID"
+where taxi.lpep_pickup_datetime::date = '2019-09-18'
+group by zone_name
+order by total desc;
+```
+Ans: "Brooklyn" "Manhattan" "Queens"
 
 ## Question 6. Largest tip
 
@@ -101,7 +132,18 @@ Note: it's not a typo, it's `tip` , not `trip`
 - JFK Airport
 - Long Island City/Queens Plaza
 
-
+```sql
+select dozones."Zone" as zone_name, max(taxi.tip_amount) as largest_tip
+from green_taxi_data as taxi
+inner join zone as puzones on taxi."PULocationID" = puzones."LocationID"
+inner join zone as dozones on taxi."DOLocationID" = dozones."LocationID"
+where 
+	to_char(taxi.lpep_pickup_datetime, 'MM-YYYY') = '09-2019' 
+	and puzones."Zone" like '%Astoria%'
+group by zone_name
+order by largest_tip desc;
+```
+Ans: JFK Airport
 
 ## Terraform
 
